@@ -40,15 +40,31 @@ def lookup_ip(ip):
             result = {"IP": ip, "Ошибка": str(e)}
     return result
 
-def get_established_ips(port):
-    # Формируем команду, подставляя переданный порт
-    command = f"netstat -tn | grep ':{port} ' | grep 'ESTABLISHED' | awk '{{print $5}}' | cut -d: -f1 | sort -u"
+def get_inbound_ips(port):
+    command = (
+        f"netstat -tn | awk -v port={port} '$6==\"ESTABLISHED\" {{"
+        f" split($4, local, \":\"); if(local[2]==port) print $5 }}' | cut -d: -f1 | sort -u"
+    )
     try:
         result = subprocess.check_output(command, shell=True, text=True)
         ips = result.strip().split("\n")
-        ips = [ip for ip in ips if ip]  # удаляем пустые строки
+        ips = [ip for ip in ips if ip]
     except subprocess.CalledProcessError as e:
-        print(f"Ошибка при выполнении команды: {e}")
+        print(f"Ошибка при выполнении команды для входящих соединений: {e}")
+        ips = []
+    return ips
+
+def get_outbound_ips(port):
+    command = (
+        f"netstat -tn | awk -v port={port} '$6==\"ESTABLISHED\" {{"
+        f" split($5, remote, \":\"); if(remote[2]==port) print $5 }}' | cut -d: -f1 | sort -u"
+    )
+    try:
+        result = subprocess.check_output(command, shell=True, text=True)
+        ips = result.strip().split("\n")
+        ips = [ip for ip in ips if ip]
+    except subprocess.CalledProcessError as e:
+        print(f"Ошибка при выполнении команды для исходящих соединений: {e}")
         ips = []
     return ips
 
@@ -59,19 +75,30 @@ asn_db_url = "https://git.io/GeoLite2-ASN.mmdb"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Получение информации по IP из ESTABLISHED соединений")
-    parser.add_argument("--port", type=int, default=443, help="Порт для фильтрации ESTABLISHED соединений (по умолчанию 443)")
+    parser.add_argument("--port", type=int, default=443,
+                        help="Порт для фильтрации ESTABLISHED соединений (по умолчанию 443)")
     args = parser.parse_args()
     
     # Скачиваем базы данных GeoLite2
     download_geoip_db(city_db_url, city_db_path)
     download_geoip_db(asn_db_url, asn_db_path)
     
-    # Получаем список IP для указанного порта
-    ips = get_established_ips(args.port)
-    if not ips:
-        print(f"Нет установленных соединений на порту {args.port}.")
+    print("=== Входящие соединения ===")
+    inbound_ips = get_inbound_ips(args.port)
+    if not inbound_ips:
+        print(f"Нет входящих соединений на порту {args.port}.")
+    for ip in inbound_ips:
+        data = lookup_ip(ip)
+        if "Ошибка" in data:
+            print(f"IP: {ip} (Ошибка: {data['Ошибка']})")
+        else:
+            print(f"IP: {data['IP']} ({data['Страна']}, {data['Город']}, AS{data['ASN']} {data['Провайдер']})")
     
-    for ip in ips:
+    print("\n=== Исходящие соединения ===")
+    outbound_ips = get_outbound_ips(args.port)
+    if not outbound_ips:
+        print(f"Нет исходящих соединений на порту {args.port}.")
+    for ip in outbound_ips:
         data = lookup_ip(ip)
         if "Ошибка" in data:
             print(f"IP: {ip} (Ошибка: {data['Ошибка']})")
