@@ -92,7 +92,11 @@ if __name__ == "__main__":
         if "Ошибка" in data:
             print(f"IP: {ip} (Ошибка: {data['Ошибка']})")
         else:
-            print(f"IP: {data['IP']} ({data['Страна']}, {data['Город']}, AS{data['ASN']} {data['Провайдер']})")
+            # Если город неизвестен, выводим без него
+            if data["Город"] == "Unknown City":
+                print(f"IP: {data['IP']} ({data['Страна']}, AS{data['ASN']} {data['Провайдер']})")
+            else:
+                print(f"IP: {data['IP']} ({data['Страна']}, {data['Город']}, AS{data['ASN']} {data['Провайдер']})")
     
     print("\n=== Исходящие соединения ===")
     outbound_ips = get_outbound_ips(args.port)
@@ -103,4 +107,7 @@ if __name__ == "__main__":
         if "Ошибка" in data:
             print(f"IP: {ip} (Ошибка: {data['Ошибка']})")
         else:
-            print(f"IP: {data['IP']} ({data['Страна']}, {data['Город']}, AS{data['ASN']} {data['Провайдер']})")
+            if data["Город"] == "Unknown City":
+                print(f"IP: {data['IP']} ({data['Страна']}, AS{data['ASN']} {data['Провайдер']})")
+            else:
+                print(f"IP: {data['IP']} ({data['Страна']}, {data['Город']}, AS{data['ASN']} {data['Провайдер']})")
