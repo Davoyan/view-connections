@@ -1,6 +1,5 @@
 import os
 import urllib.request
-import geoip2.database
 import subprocess
 import argparse
 
@@ -88,6 +87,8 @@ if __name__ == "__main__":
         subprocess.run(["apt", "install", "-y"] + packages_to_install, check=True)
     else:
         print("Необходимые пакеты установлены.")
+
+    import geoip2.database
     
     parser = argparse.ArgumentParser(description="Получение информации по IP из ESTABLISHED соединений")
     parser.add_argument("--port", type=int, default=443,
