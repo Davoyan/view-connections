@@ -68,12 +68,27 @@ def get_outbound_ips(port):
         ips = []
     return ips
 
+def is_package_installed(package_name):
+    result = subprocess.run(
+        ["dpkg", "-l", package_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    return result.returncode == 0
+
 city_db_path = "/tmp/GeoLite2-City.mmdb"
 asn_db_path = "/tmp/GeoLite2-ASN.mmdb"
 city_db_url = "https://git.io/GeoLite2-City.mmdb"
 asn_db_url = "https://git.io/GeoLite2-ASN.mmdb"
 
 if __name__ == "__main__":
+    packages = ["python3-geoip2", "net-tools"]
+    packages_to_install = [pkg for pkg in packages if not is_package_installed(pkg)]
+    
+    if packages_to_install:
+        print(f"Устанавливаю: {' '.join(packages_to_install)}")
+        subprocess.run(["apt", "install", "-y"] + packages_to_install, check=True)
+    else:
+        print("Необходимые пакеты установлены.")
+    
     parser = argparse.ArgumentParser(description="Получение информации по IP из ESTABLISHED соединений")
     parser.add_argument("--port", type=int, default=443,
                         help="Порт для фильтрации ESTABLISHED соединений (по умолчанию 443)")
