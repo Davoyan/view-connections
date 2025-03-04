@@ -2,6 +2,7 @@ import os
 import urllib.request
 import subprocess
 import argparse
+import geoip2.database
 
 def download_geoip_db(db_url, db_path):
     if os.path.exists(db_path):
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     else:
         print("Необходимые пакеты установлены.")
 
-    import geoip2.database
+    
     
     parser = argparse.ArgumentParser(description="Получение информации по IP из ESTABLISHED соединений")
     parser.add_argument("--port", type=int, default=443,
