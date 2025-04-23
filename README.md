@@ -2,6 +2,7 @@
 ```
 apt update 
 apt install python3
+apt install python3-geoip2
 ```
 
 ```bash
